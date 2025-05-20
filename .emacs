@@ -20,13 +20,29 @@
   :ensure t
   :commands (lsp lsp-deferred)
   :hook ((c++-mode . lsp-deferred)
-         (c-mode . lsp-deferred))
+         (c-mode . lsp-deferred)
+         (lsp-mode . lsp-enable-which-key-integration))
   :init
   (setq lsp-keymap-prefix "C-c l")
-;;  :config
-;;  (define-key lsp-mode-map (kbd "M-,") 'lsp-closeness-navigator-backward) ;
-;;  (define-key lsp-mode-map (kbd "M-<") 'lsp-closeness-navigator-forward)
-  )
+  :config
+  (setq lsp-enable-on-type-formatting t)
+
+  (add-hook 'before-save-hook
+            (lambda ()
+              (when (and (member major-mode '(c-mode c++-mode))
+                         buffer-file-name
+                         (bound-and-true-p lsp-mode)
+                         (lsp-feature? "textDocument/formatting")) 
+                (lsp-format-buffer)))
+            nil t)
+
+  (setq lsp-clients-clangd-args
+        '("-j=4"
+          "--fallback-style=WebKit"
+          ))
+
+  (setq lsp-enable-document-formatting t) 
+)
 
 (use-package lsp-ui
   :ensure t
@@ -68,6 +84,10 @@
   :ensure t
   )
 
+;(use-package clang-format
+;  :ensure t
+;  )
+
 (defun my-point-is-at-natural-word-start-p ()
   "Проверяет, находится ли курсор в 'естественном' начале слова.
 Это означает, что символ перед курсором не является частью слова
@@ -94,9 +114,19 @@
 
 
 (custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(ace-jump-mode company corfu lsp-ui magit modus-themes neotree)))
+   '(ace-jump-mode clang-format company corfu dap-mode helm-lsp lsp-ivy
+		   lsp-treemacs lsp-ui magit modus-themes neotree
+		   yasnippet)))
 (custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  )
 
 (when (< 26 emacs-major-version)
@@ -130,3 +160,23 @@
   )
 
 (setq vc-make-backup-files nil)
+
+(setq frame-resize-pixelwise t)
+(setq frame-inhibit-implied-resize t)
+(add-to-list 'default-frame-alist '(fullscreen . nil))
+(add-to-list 'default-frame-alist '(wait-for-wm . nil))
+
+
+(add-hook 'prog-mode-hook (lambda () (visual-line-mode -1)))
+(add-hook 'text-mode-hook (lambda () (visual-line-mode -1)))
+(add-hook 'text-mode-hook (lambda () (auto-fill-mode -1)))
+(add-hook 'prog-mode-hook (lambda () (auto-fill-mode -1)))
+						     
+(use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+
+(add-hook 'c-mode-common-hook
+          (lambda ()
+            (setq c-basic-offset 4)
+            (setq indent-tabs-mode nil)
+            (setq-local tab-width 4)
+            ))
